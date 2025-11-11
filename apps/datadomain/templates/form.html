@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Datadomain Metrics Relay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; margin: 2rem; max-width: 960px; }
+    fieldset { margin-bottom: 1.5rem; border: 1px solid #ccc; padding: 1rem; }
+    legend { font-weight: bold; }
+    label { display: block; margin-bottom: 0.5rem; }
+    input[type="text"], input[type="number"], input[type="password"] { width: 100%; padding: 0.5rem; }
+    .checkbox-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .error { color: #b30000; margin-bottom: 1rem; font-weight: bold; }
+    .warning { background: #fff4cd; border: 1px solid #f0c36d; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+    button { padding: 0.75rem 1.5rem; font-size: 1rem; }
+    .tokens details { margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <h1>Datadomain Metrics Relay</h1>
+  <p>Submit Data Domain metrics to one or more Dynatrace tenants.</p>
+  {% if not auth_configured %}
+    <div class="warning">
+      <strong>Configuration required:</strong>
+      Set the <code>AUTH_PASSWORD</code> environment variable on the server before attempting an ingest.
+    </div>
+  {% endif %}
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="{{ url_for('datadomain.ingest') }}">
+    <fieldset>
+      <legend>Tenant Selection</legend>
+      <div class="checkbox-group">
+        {% for tenant in tenants %}
+          <label>
+            <input type="checkbox" name="tenant_ids" value="{{ tenant.id }}" {% if tenant.id in selected_tenants %}checked{% endif %}>
+            {{ tenant.label }} ({{ tenant.id }})
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Authentication</legend>
+      <label>Site password
+        <input type="password" name="auth_password" required>
+      </label>
+      <label>Global Dynatrace ingest token
+        <input type="password" name="dt_token" {% if require_global_token %}required{% endif %}>
+      </label>
+      <div class="tokens">
+        <details>
+          <summary>Optional per-tenant tokens</summary>
+          {% for tenant in tenants %}
+            <label>{{ tenant.label }} override
+              <input type="password" name="dt_token__{{ tenant.id }}">
+            </label>
+          {% endfor %}
+        </details>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dimensions</legend>
+      <label>System
+        <input type="text" name="system" value="{{ form_defaults.system }}">
+      </label>
+      <label>Site
+        <input type="text" name="site" value="{{ form_defaults.site }}">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Metrics</legend>
+      <label>Total Space
+        <input type="text" name="totalSpace" value="{{ form_defaults.totalSpace }}">
+      </label>
+      <label>Used Space
+        <input type="text" name="usedSpace" value="{{ form_defaults.usedSpace }}">
+      </label>
+      <label>Available Space
+        <input type="text" name="availableSpace" value="{{ form_defaults.availableSpace }}">
+      </label>
+      <label>Pre-compressed bytes
+        <input type="text" name="preComp" value="{{ form_defaults.preComp }}">
+      </label>
+      <label>Post-compressed bytes
+        <input type="text" name="postComp" value="{{ form_defaults.postComp }}">
+      </label>
+      <label>Total compression factor
+        <input type="text" name="totalCompFactor" value="{{ form_defaults.totalCompFactor }}">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Timestamp</legend>
+      <label>Override timestamp (ms since epoch)
+        <input type="text" name="ts" value="{{ form_defaults.ts }}">
+      </label>
+    </fieldset>
+
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>
