@@ -1,0 +1,35 @@
+services:
+  app:
+    build: .
+    environment:
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-changeme}
+      DEFAULT_DIM_SYSTEM: ${DEFAULT_DIM_SYSTEM:-dd-system-01}
+      DEFAULT_DIM_SITE: ${DEFAULT_DIM_SITE:-primary-dc}
+      METRIC_PREFIX: ${METRIC_PREFIX:-custom.ddfs}
+    volumes:
+      - ./config/tenants.json:/app/config/tenants.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  reverse-proxy:
+    image: nginx:1.25-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "443:443"
+    volumes:
+      - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./reverse-proxy/certs:/etc/nginx/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --no-check-certificate --tries=1 --spider https://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
