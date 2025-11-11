@@ -83,7 +83,6 @@ dt-relay/
    export DEFAULT_DIM_SYSTEM="dd-prod"
    export DEFAULT_DIM_SITE="primary"
    export METRIC_PREFIX="custom.ddfs"
-   docker compose up -d --build
    ```
 
 3. Update DNS to point to the host running dt-relay. No code changes are required when swapping certificates or hostnames.
