@@ -1,6 +1,6 @@
 # dt-relay
 
-dt-relay is a lightweight relay that ingests metrics into Dynatrace from curated tools. The first tool, `/datadomain`, turns Data Domain capacity values into Dynatrace metrics using the Metrics v2 API. The project is structured so additional tools can be added under `apps/` without touching the core server code.
+dt-relay is a lightweight relay that ingests metrics into Dynatrace from curated tools. The first tool, `/dt-relay/datadomain`, turns Data Domain capacity values into Dynatrace metrics using the Metrics v2 API. The project is structured so additional tools can be added under `apps/` without touching the core server code.
 
 ## Features
 
@@ -61,7 +61,7 @@ dt-relay/
 
 3. Navigate to <https://localhost/>. Accept the browser warning for the self-signed cert.
 
-4. Visit <https://localhost/datadomain> to use the Data Domain form.
+4. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
 
 ## Production Deployment (corporate certs)
 
@@ -126,7 +126,7 @@ Restart the stack after editing this file.
 Verify the application is healthy via HTTPS:
 
 ```bash
-curl -k https://localhost/health
+curl -k https://localhost/dt-relay/health
 ```
 
 The response should be `ok` with status `200`.
@@ -136,7 +136,7 @@ The response should be `ok` with status `200`.
 You can pre-fill the Data Domain form using query parameters:
 
 ```
-https://<your-host>/datadomain?system=dd-system-01&site=primary-dc&totalSpace=543.5&usedSpace=443.43&availableSpace=100.07&preComp=632023121083777&postComp=75624078408985&totalCompFactor=8.3531
+https://<your-host>/dt-relay/datadomain?system=dd-system-01&site=primary-dc&totalSpace=543.5&usedSpace=443.43&availableSpace=100.07&preComp=632023121083777&postComp=75624078408985&totalCompFactor=8.3531
 ```
 
 ## Synthetic Validation Tip
@@ -159,6 +159,6 @@ Keep HTML simple and rely on server-side rendering. Avoid logging sensitive fiel
 ## Example Workflow
 
 1. Launch the stack.
-2. Browse to `/datadomain` with prefilled query parameters.
+2. Browse to `/dt-relay/datadomain` with prefilled query parameters.
 3. Choose one or more tenants, provide the site password and tokens.
 4. Submit the form. The results page reports per-tenant status with payload previews. All successes display `<div id="ingest-result">SUCCESS</div>`.

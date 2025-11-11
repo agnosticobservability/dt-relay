@@ -19,7 +19,7 @@
   <ul>
     {% for subapp in subapps %}
       <li>
-        <a href="/{{ subapp.slug }}">/{{ subapp.slug }}</a>
+        <a href="{{ subapp.url }}">{{ subapp.url }}</a>
         — {{ subapp.description }}
       </li>
     {% endfor %}

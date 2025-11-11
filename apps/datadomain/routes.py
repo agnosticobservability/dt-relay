@@ -8,7 +8,12 @@ from . import metrics, views
 
 logger = logging.getLogger(__name__)
 
-bp = Blueprint("datadomain", __name__, url_prefix="/datadomain", template_folder="templates")
+bp = Blueprint(
+    "datadomain",
+    __name__,
+    url_prefix="/dt-relay/datadomain",
+    template_folder="templates",
+)
 
 METADATA = {
     "slug": "datadomain",

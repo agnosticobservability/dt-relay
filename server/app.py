@@ -3,7 +3,7 @@ import os
 import pathlib
 from typing import Dict, List
 
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for
 
 from . import util
 
@@ -35,13 +35,19 @@ def create_app() -> Flask:
         return response
 
     @app.route("/")
+    @app.route("/dt-relay/")
     def index():
+        subapp_links = [
+            {**s.metadata, "url": url_for(f"{s.name}.form")}
+            for s in subapps
+        ]
         return render_template(
             "core/index.html",
-            subapps=[s.metadata for s in subapps],
+            subapps=subapp_links,
         )
 
     @app.route("/health")
+    @app.route("/dt-relay/health")
     def health():
         return ("ok", 200, {"Content-Type": "text/plain; charset=utf-8"})
 
