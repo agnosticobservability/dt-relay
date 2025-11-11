@@ -53,15 +53,25 @@ dt-relay/
      -subj "/CN=localhost"
    ```
 
-2. Start the stack:
+2. Ensure your user can communicate with the Docker daemon. If you see
+   `permission denied while trying to connect to the Docker daemon socket`,
+   add yourself to the `docker` group and log back in:
+
+   ```bash
+   sudo groupadd docker 2>/dev/null || true
+   sudo usermod -aG docker "$USER"
+   newgrp docker
+   ```
+
+3. Start the stack:
 
    ```bash
    AUTH_PASSWORD=changeme docker compose up -d --build
    ```
 
-3. Navigate to <https://localhost/>. Accept the browser warning for the self-signed cert.
+4. Navigate to <https://localhost/>. Accept the browser warning for the self-signed cert.
 
-4. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
+5. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
 
 ## Production Deployment (corporate certs)
 
