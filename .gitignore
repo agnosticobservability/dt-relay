@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+reverse-proxy/certs/*.pem
+reverse-proxy/certs/*.crt
+reverse-proxy/certs/*.key

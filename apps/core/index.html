@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>dt-relay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    h1 { margin-bottom: 1rem; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 0.75rem; }
+    a { color: #0056b3; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>dt-relay</h1>
+  <p>Select a tool below:</p>
+  <ul>
+    {% for subapp in subapps %}
+      <li>
+        <a href="/{{ subapp.slug }}">/{{ subapp.slug }}</a>
+        — {{ subapp.description }}
+      </li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
