@@ -5,8 +5,6 @@ from typing import Dict, List
 
 from flask import Flask, render_template, url_for
 
-from . import util
-
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 APPS_DIR = BASE_DIR / "apps"
 
@@ -20,7 +18,7 @@ class SubApp:
 
 def create_app() -> Flask:
     app = Flask(__name__, template_folder=str(BASE_DIR / "apps"))
-    app.config["AUTH_PASSWORD"] = util.get_env("AUTH_PASSWORD", "")
+    app.config["AUTH_PASSWORD"] = os.getenv("AUTH_PASSWORD", "")
     app.config["DEFAULT_DIM_SYSTEM"] = os.getenv("DEFAULT_DIM_SYSTEM", "dd-system-01")
     app.config["DEFAULT_DIM_SITE"] = os.getenv("DEFAULT_DIM_SITE", "primary-dc")
     app.config["METRIC_PREFIX"] = os.getenv("METRIC_PREFIX", "custom.ddfs")

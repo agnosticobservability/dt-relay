@@ -94,7 +94,7 @@ dt-relay/
 
 | Variable             | Description                                                    | Default         |
 |----------------------|----------------------------------------------------------------|-----------------|
-| `AUTH_PASSWORD`      | Required password to submit the form.                          | (none / must set) |
+| `AUTH_PASSWORD`      | Required password to submit the form.                          | `(blank)` (set explicitly) |
 | `DEFAULT_DIM_SYSTEM` | Default `system` dimension when the form is empty.             | `dd-system-01`  |
 | `DEFAULT_DIM_SITE`   | Default `site` dimension when the form is empty.               | `primary-dc`    |
 | `METRIC_PREFIX`      | Metric prefix when tenants do not specify their own.           | `custom.ddfs`   |
@@ -170,5 +170,5 @@ Keep HTML simple and rely on server-side rendering. Avoid logging sensitive fiel
 
 1. Launch the stack.
 2. Browse to `/dt-relay/datadomain` with prefilled query parameters.
-3. Choose one or more tenants, provide the site password and tokens.
+3. Choose one or more tenants, provide the site password and tokens. If the form displays a configuration warning, set `AUTH_PASSWORD` on the server first.
 4. Submit the form. The results page reports per-tenant status with payload previews. All successes display `<div id="ingest-result">SUCCESS</div>`.

@@ -35,6 +35,7 @@ def form():
         selected_tenants=selected,
         require_global_token=False,
         form_defaults=defaults,
+        auth_configured=bool(current_app.config.get("AUTH_PASSWORD")),
     )
 
 
@@ -48,8 +49,12 @@ def ingest():
     tenants = util.TenantRegistry.load()
     form_data = request.form
 
+    expected_password = current_app.config.get("AUTH_PASSWORD", "")
+    if not expected_password:
+        return ("AUTH_PASSWORD is not configured on the server", 500)
+
     auth_password = form_data.get("auth_password")
-    if not auth_password or auth_password != current_app.config["AUTH_PASSWORD"]:
+    if not auth_password or auth_password != expected_password:
         return ("Unauthorized", 401)
 
     tenant_ids = form_data.getlist("tenant_ids")
