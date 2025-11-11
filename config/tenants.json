@@ -1,0 +1,15 @@
+[
+  {
+    "id": "prod",
+    "label": "Prod Tenant",
+    "baseUrl": "https://abc12345.live.dynatrace.com",
+    "metricPrefix": "custom.ddfs",
+    "staticDims": { "env": "prod" }
+  },
+  {
+    "id": "qa",
+    "label": "QA Tenant",
+    "baseUrl": "https://abc12345.qa.live.dynatrace.com",
+    "staticDims": { "env": "qa" }
+  }
+]
