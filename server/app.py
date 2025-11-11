@@ -13,18 +13,35 @@ LOG_DIR = BASE_DIR / "logs"
 
 
 def configure_logging() -> None:
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-    log_file = LOG_DIR / "dt-relay.log"
-
-    handler = RotatingFileHandler(log_file, maxBytes=1_048_576, backupCount=5)
-    handler.setLevel(logging.INFO)
     formatter = logging.Formatter(
         "%(asctime)s %(levelname)s [%(name)s] %(message)s"
     )
-    handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
+
+    try:
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        log_file = LOG_DIR / "dt-relay.log"
+
+        handler = RotatingFileHandler(log_file, maxBytes=1_048_576, backupCount=5)
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(formatter)
+
+    except OSError as exc:
+        for existing in root_logger.handlers:
+            if isinstance(existing, logging.StreamHandler):
+                break
+        else:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setLevel(logging.INFO)
+            stream_handler.setFormatter(formatter)
+            root_logger.addHandler(stream_handler)
+
+        root_logger.warning(
+            "File logging disabled; falling back to stdout/stderr (%s)", exc,
+        )
+        return
 
     for existing in root_logger.handlers:
         if isinstance(existing, RotatingFileHandler) and getattr(existing, "baseFilename", None) == str(log_file):
