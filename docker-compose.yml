@@ -8,6 +8,7 @@ services:
       METRIC_PREFIX: ${METRIC_PREFIX:-custom.ddfs}
     volumes:
       - ./config/tenants.json:/app/config/tenants.json:ro
+      - ./logs:/app/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
       interval: 30s

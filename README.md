@@ -73,6 +73,13 @@ dt-relay/
 
 5. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
 
+## Logs
+
+- Application logs are written to `logs/dt-relay.log`. The directory ships with the
+  repository and is mounted read/write into the container by `docker compose`.
+- Review the file with `tail -f logs/dt-relay.log` while testing ingest flows.
+- Logs intentionally omit sensitive values like Dynatrace tokens and form payloads.
+
 ## Production Deployment (corporate certs)
 
 1. Place the provided TLS certificate and key in `reverse-proxy/certs/fullchain.pem` and `reverse-proxy/certs/privkey.pem` respectively (do not commit real certs).
@@ -83,6 +90,7 @@ dt-relay/
    export DEFAULT_DIM_SYSTEM="dd-prod"
    export DEFAULT_DIM_SITE="primary"
    export METRIC_PREFIX="custom.ddfs"
+   docker compose up -d --build
    ```
 
 3. Update DNS to point to the host running dt-relay. No code changes are required when swapping certificates or hostnames.

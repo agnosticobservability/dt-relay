@@ -1,12 +1,36 @@
 import importlib
+import logging
 import os
 import pathlib
+from logging.handlers import RotatingFileHandler
 from typing import Dict, List
 
 from flask import Flask, render_template, url_for
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 APPS_DIR = BASE_DIR / "apps"
+LOG_DIR = BASE_DIR / "logs"
+
+
+def configure_logging() -> None:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_file = LOG_DIR / "dt-relay.log"
+
+    handler = RotatingFileHandler(log_file, maxBytes=1_048_576, backupCount=5)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+    )
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    for existing in root_logger.handlers:
+        if isinstance(existing, RotatingFileHandler) and getattr(existing, "baseFilename", None) == str(log_file):
+            break
+    else:
+        root_logger.addHandler(handler)
 
 
 class SubApp:
@@ -17,6 +41,7 @@ class SubApp:
 
 
 def create_app() -> Flask:
+    configure_logging()
     app = Flask(__name__, template_folder=str(BASE_DIR / "apps"))
     app.config["AUTH_PASSWORD"] = os.getenv("AUTH_PASSWORD", "")
     app.config["DEFAULT_DIM_SYSTEM"] = os.getenv("DEFAULT_DIM_SYSTEM", "dd-system-01")

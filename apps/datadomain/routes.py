@@ -68,6 +68,8 @@ def ingest():
     tenant_results: List[Dict[str, object]] = []
     overall_success = True
 
+    logger.info("Ingest request received for tenants: %s", ",".join(tenant_ids))
+
     for tenant_id in tenant_ids:
         tenant = tenants.get(tenant_id)
         if not tenant:
@@ -98,6 +100,8 @@ def ingest():
             overall_success = False
             continue
 
+        logger.info("Preparing ingest payload for tenant %s", tenant.id)
+
         dims = {
             "system": form_data.get("system") or current_app.config["DEFAULT_DIM_SYSTEM"],
             "site": form_data.get("site") or current_app.config["DEFAULT_DIM_SITE"],
@@ -123,6 +127,11 @@ def ingest():
             response = util.post_metrics(tenant, token_to_use, lines)
             success = response.status_code in (200, 202)
             message = "Ingest accepted" if success else response.text or "Ingest failed"
+            logger.info(
+                "Ingest attempt for tenant %s returned status %s",
+                tenant.id,
+                response.status_code,
+            )
             tenant_results.append(
                 {
                     "label": tenant.label,
@@ -148,6 +157,10 @@ def ingest():
             overall_success = False
 
     overall_status = "SUCCESS" if overall_success else "FAILURE"
+
+    logger.info(
+        "Ingest request completed with overall status %s", overall_status
+    )
 
     return render_template(
         views.RESULTS_TEMPLATE,
