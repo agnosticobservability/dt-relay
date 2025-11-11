@@ -69,9 +69,28 @@ dt-relay/
    AUTH_PASSWORD=changeme docker compose up -d --build
    ```
 
+   You can also use the helper script described below to manage the stack.
+
 4. Navigate to <https://localhost/>. Accept the browser warning for the self-signed cert.
 
 5. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
+
+### Helper script
+
+Use `scripts/dt-relay.sh` to start, stop, or restart the Docker stack with a single
+command. The script automatically prefers a local `.env` file and falls back to
+`config/defaults.env` if one exists.
+
+```bash
+# Start (builds images if needed)
+./scripts/dt-relay.sh start
+
+# Stop the stack
+./scripts/dt-relay.sh stop
+
+# Restart the stack
+./scripts/dt-relay.sh restart
+```
 
 ## Logs
 
