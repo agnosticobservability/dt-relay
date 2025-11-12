@@ -5,3 +5,5 @@ __pycache__/
 reverse-proxy/certs/*.pem
 reverse-proxy/certs/*.crt
 reverse-proxy/certs/*.key
+!reverse-proxy/certs/fullchain.pem
+!reverse-proxy/certs/privkey.pem
