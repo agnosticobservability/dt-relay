@@ -1,11 +1,15 @@
 import importlib
+import json
 import logging
 import os
 import pathlib
+import re
 from logging.handlers import RotatingFileHandler
-from typing import Dict, List
+from typing import Dict, List, Mapping
 
-from flask import Flask, render_template, url_for
+from flask import Flask, Response, render_template, url_for
+
+from . import util
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 APPS_DIR = BASE_DIR / "apps"
@@ -64,6 +68,9 @@ def create_app() -> Flask:
     app.config["DEFAULT_DIM_SYSTEM"] = os.getenv("DEFAULT_DIM_SYSTEM", "dd-system-01")
     app.config["DEFAULT_DIM_SITE"] = os.getenv("DEFAULT_DIM_SITE", "primary-dc")
     app.config["METRIC_PREFIX"] = os.getenv("METRIC_PREFIX", "custom.ddfs")
+    app.config["METRICS_CUSTOM_LABELS"] = _parse_custom_metric_labels(
+        os.getenv("METRICS_CUSTOM_LABELS", "")
+    )
 
     subapps = load_subapps(app)
 
@@ -91,6 +98,11 @@ def create_app() -> Flask:
     def health():
         return ("ok", 200, {"Content-Type": "text/plain; charset=utf-8"})
 
+    @app.route("/metrics/")
+    def metrics():
+        payload = _build_metrics_payload(subapps, app.config["METRICS_CUSTOM_LABELS"])
+        return Response(payload, content_type="text/plain; charset=utf-8")
+
     return app
 
 
@@ -112,6 +124,125 @@ def load_subapps(app: Flask) -> List[SubApp]:
         subapps.append(SubApp(path.name, blueprint, metadata))
     app.config["SUBAPPS"] = subapps
     return subapps
+
+
+def _parse_custom_metric_labels(raw: str) -> Dict[str, str]:
+    """Parse the METRICS_CUSTOM_LABELS environment variable.
+
+    The value can be either a JSON object or a comma-separated list of
+    ``key=value`` pairs. Invalid entries are ignored.
+    """
+
+    if not raw:
+        return {}
+
+    raw = raw.strip()
+    if not raw:
+        return {}
+
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        parsed = None
+    else:
+        if isinstance(parsed, dict):
+            return {str(k).strip(): str(v) for k, v in parsed.items() if str(k).strip()}
+
+    labels: Dict[str, str] = {}
+    for chunk in raw.split(","):
+        piece = chunk.strip()
+        if not piece:
+            continue
+        if "=" not in piece:
+            logging.getLogger(__name__).warning(
+                "Ignoring custom metrics label without '=': %s", piece
+            )
+            continue
+        key, value = piece.split("=", 1)
+        key = key.strip()
+        if not key:
+            logging.getLogger(__name__).warning(
+                "Ignoring custom metrics label with empty key"
+            )
+            continue
+        labels[key] = value.strip()
+    return labels
+
+
+def _build_metrics_payload(subapps: List[SubApp], custom_labels: Mapping[str, str]) -> str:
+    sections: List[List[str]] = []
+
+    tenant_count = len(util.TenantRegistry.load())
+    sections.append(
+        [
+            "# HELP dt_relay_tenants Number of configured Dynatrace tenants.",
+            "# TYPE dt_relay_tenants gauge",
+            f"dt_relay_tenants {tenant_count}",
+        ]
+    )
+
+    sections.append(
+        [
+            "# HELP dt_relay_subapps Number of registered dt-relay sub-applications.",
+            "# TYPE dt_relay_subapps gauge",
+            f"dt_relay_subapps {len(subapps)}",
+        ]
+    )
+
+    if subapps:
+        subapp_info: List[str] = [
+            "# HELP dt_relay_subapp_info dt-relay sub-application metadata.",
+            "# TYPE dt_relay_subapp_info gauge",
+        ]
+        for subapp in subapps:
+            labels = {
+                "slug": subapp.metadata.get("slug") or subapp.name,
+                "name": subapp.metadata.get("name") or subapp.name,
+            }
+            description = subapp.metadata.get("description")
+            if description:
+                labels["description"] = description
+            subapp_info.append(
+                f"dt_relay_subapp_info{{{_format_metric_labels(labels)}}} 1"
+            )
+        sections.append(subapp_info)
+
+    if custom_labels:
+        sections.append(
+            [
+                "# HELP dt_relay_custom_labels Custom key/value metadata attached to dt-relay metrics.",
+                "# TYPE dt_relay_custom_labels gauge",
+                f"dt_relay_custom_labels{{{_format_metric_labels(custom_labels)}}} 1",
+            ]
+        )
+
+    return "\n\n".join("\n".join(section) for section in sections) + "\n"
+
+
+def _format_metric_labels(labels: Mapping[str, str]) -> str:
+    formatted = []
+    for key, value in sorted(labels.items()):
+        name = _sanitize_label_name(str(key))
+        formatted.append(f'{name}="{_escape_label_value(str(value))}"')
+    return ",".join(formatted)
+
+
+_INVALID_LABEL_CHARS = re.compile(r"[^a-zA-Z0-9_]")
+
+
+def _sanitize_label_name(name: str) -> str:
+    sanitized = _INVALID_LABEL_CHARS.sub("_", name.strip())
+    if not sanitized:
+        return "_"
+    if sanitized[0].isdigit():
+        sanitized = f"_{sanitized}"
+    return sanitized
+
+
+def _escape_label_value(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
+    )
 
 
 app = create_app()
