@@ -77,6 +77,11 @@ Use `scripts/dt-relay.sh` to start, stop, or restart the Docker stack with a sin
 command. The script automatically prefers a local `.env` file and falls back to
 `config/defaults.env` if one exists.
 
+To stop the stack, update the repository, and start everything back up again in a
+single command, use `scripts/update.sh`. Any arguments you provide are forwarded to
+`git pull`, allowing you to specify a remote or refspec as needed. Submodules are
+also updated automatically.
+
 ```bash
 # Start (builds images if needed)
 ./scripts/dt-relay.sh start
@@ -86,6 +91,9 @@ command. The script automatically prefers a local `.env` file and falls back to
 
 # Restart the stack
 ./scripts/dt-relay.sh restart
+
+# Stop the stack, pull the latest code, and restart
+./scripts/update.sh
 ```
 
 ## Logs
