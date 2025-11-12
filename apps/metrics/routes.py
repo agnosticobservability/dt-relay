@@ -35,7 +35,7 @@ def form():
     defaults = _form_defaults()
 
     return render_template(
-        "metrics/form.html",
+        "form.html",
         tenants=tenant_list,
         error=error,
         selected_tenants=selected,
@@ -183,7 +183,7 @@ def ingest():
     logger.info("Generic metrics ingest completed with overall status %s", overall_status)
 
     return render_template(
-        "metrics/results.html",
+        "results.html",
         overall_status=overall_status,
         tenant_results=tenant_results,
     )
