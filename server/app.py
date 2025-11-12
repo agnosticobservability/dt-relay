@@ -63,7 +63,7 @@ class SubApp:
 
 def create_app() -> Flask:
     configure_logging()
-    app = Flask(__name__, template_folder=str(BASE_DIR / "apps"))
+    app = Flask(__name__, template_folder=str(APPS_DIR / "core"))
     app.config["AUTH_PASSWORD"] = os.getenv("AUTH_PASSWORD", "")
     app.config["DEFAULT_DIM_SYSTEM"] = os.getenv("DEFAULT_DIM_SYSTEM", "dd-system-01")
     app.config["DEFAULT_DIM_SITE"] = os.getenv("DEFAULT_DIM_SITE", "primary-dc")
@@ -89,7 +89,7 @@ def create_app() -> Flask:
             for s in subapps
         ]
         return render_template(
-            "core/index.html",
+            "index.html",
             subapps=subapp_links,
         )
 
