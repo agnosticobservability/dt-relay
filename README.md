@@ -130,6 +130,7 @@ also updated automatically.
 | `DEFAULT_DIM_SYSTEM` | Default `system` dimension when the form is empty.             | `dd-system-01`  |
 | `DEFAULT_DIM_SITE`   | Default `site` dimension when the form is empty.               | `primary-dc`    |
 | `METRIC_PREFIX`      | Metric prefix when tenants do not specify their own.           | `custom.ddfs`   |
+| `METRICS_CUSTOM_LABELS` | Optional labels to attach to the `/metrics/` endpoint output. Accepts JSON or comma-separated `key=value` pairs. | `(blank)` |
 
 ### Tenants
 
