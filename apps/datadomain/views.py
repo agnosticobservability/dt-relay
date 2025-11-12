@@ -1,2 +1,2 @@
-FORM_TEMPLATE = "datadomain/form.html"
-RESULTS_TEMPLATE = "datadomain/results.html"
+FORM_TEMPLATE = "form.html"
+RESULTS_TEMPLATE = "results.html"
