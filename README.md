@@ -43,17 +43,12 @@ dt-relay/
 
 ## Quick Start (self-signed development certs)
 
-1. Generate a self-signed certificate (valid for `localhost`):
+> **Note**
+> A self-signed certificate for `localhost` is bundled in `reverse-proxy/certs` so
+> you can get started immediately. Replace it with trusted certificates for any
+> non-development use.
 
-   ```bash
-   mkdir -p reverse-proxy/certs
-   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-     -keyout reverse-proxy/certs/privkey.pem \
-     -out reverse-proxy/certs/fullchain.pem \
-     -subj "/CN=localhost"
-   ```
-
-2. Ensure your user can communicate with the Docker daemon. If you see
+1. Ensure your user can communicate with the Docker daemon. If you see
    `permission denied while trying to connect to the Docker daemon socket`,
    add yourself to the `docker` group and log back in:
 
@@ -63,7 +58,7 @@ dt-relay/
    newgrp docker
    ```
 
-3. Start the stack:
+2. Start the stack:
 
    ```bash
    AUTH_PASSWORD=changeme docker compose up -d --build
@@ -71,9 +66,10 @@ dt-relay/
 
    You can also use the helper script described below to manage the stack.
 
-4. Navigate to <https://localhost/>. Accept the browser warning for the self-signed cert.
+3. Navigate to <https://localhost/>. Accept the browser warning for the bundled
+   self-signed development certificate.
 
-5. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
+4. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
 
 ### Helper script
 
@@ -96,6 +92,8 @@ command. The script automatically prefers a local `.env` file and falls back to
 
 - Application logs are written to `logs/dt-relay.log`. The directory ships with the
   repository and is mounted read/write into the container by `docker compose`.
+- The container entrypoint adjusts permissions on the mounted directory when the
+  stack starts so that logs are still captured when the host path is owned by root.
 - Review the file with `tail -f logs/dt-relay.log` while testing ingest flows.
 - Logs intentionally omit sensitive values like Dynatrace tokens and form payloads.
 
