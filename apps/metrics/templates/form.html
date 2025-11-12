@@ -16,8 +16,10 @@
     button { padding: 0.5rem 1rem; font-size: 1rem; }
     .pair-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
     .pair-grid input { width: 100%; }
-    .pair-grid button { width: auto; }
+    .pair-actions { display: flex; gap: 0.25rem; }
+    .pair-actions button { width: 2.5rem; height: 2.5rem; font-size: 1.25rem; line-height: 1; padding: 0; }
     .section-actions { margin-top: 0.75rem; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -76,16 +78,18 @@
       <legend>Dimensions</legend>
       <p>Add key/value pairs to send as dimensions with each metric line.</p>
       <div id="dimensions-container">
-        {% for key, value in initial_dimensions %}
-          <div class="pair-grid">
-            <input type="text" name="dim_keys" placeholder="Dimension key" value="{{ key }}">
-            <input type="text" name="dim_values" placeholder="Dimension value" value="{{ value }}">
-            <button type="button" class="remove-pair" aria-label="Remove dimension">Remove</button>
-          </div>
-        {% endfor %}
-      </div>
-      <div class="section-actions">
-        <button type="button" id="add-dimension">Add dimension</button>
+        {% if initial_dimensions %}
+          {% for key, value in initial_dimensions %}
+            <div class="pair-grid">
+              <input type="text" name="dim_keys" placeholder="Dimension key" value="{{ key }}">
+              <input type="text" name="dim_values" placeholder="Dimension value" value="{{ value }}">
+              <div class="pair-actions">
+                <button type="button" class="add-pair" aria-label="Add dimension">+</button>
+                <button type="button" class="remove-pair" aria-label="Remove dimension">-</button>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
       </div>
     </fieldset>
 
@@ -98,19 +102,22 @@
             <div class="pair-grid">
               <input type="text" name="metric_keys" placeholder="Metric key" value="{{ key }}">
               <input type="text" name="metric_values" placeholder="Metric value" value="{{ value }}">
-              <button type="button" class="remove-pair" aria-label="Remove metric">Remove</button>
+              <div class="pair-actions">
+                <button type="button" class="add-pair" aria-label="Add metric">+</button>
+                <button type="button" class="remove-pair" aria-label="Remove metric">-</button>
+              </div>
             </div>
           {% endfor %}
         {% else %}
           <div class="pair-grid">
             <input type="text" name="metric_keys" placeholder="Metric key">
             <input type="text" name="metric_values" placeholder="Metric value">
-            <button type="button" class="remove-pair" aria-label="Remove metric">Remove</button>
+            <div class="pair-actions">
+              <button type="button" class="add-pair" aria-label="Add metric">+</button>
+              <button type="button" class="remove-pair" aria-label="Remove metric">-</button>
+            </div>
           </div>
         {% endif %}
-      </div>
-      <div class="section-actions">
-        <button type="button" id="add-metric">Add metric</button>
       </div>
     </fieldset>
 
@@ -129,7 +136,10 @@
     <div class="pair-grid">
       <input type="text" name="dim_keys" placeholder="Dimension key">
       <input type="text" name="dim_values" placeholder="Dimension value">
-      <button type="button" class="remove-pair" aria-label="Remove dimension">Remove</button>
+      <div class="pair-actions">
+        <button type="button" class="add-pair" aria-label="Add dimension">+</button>
+        <button type="button" class="remove-pair" aria-label="Remove dimension">-</button>
+      </div>
     </div>
   </template>
 
@@ -137,7 +147,10 @@
     <div class="pair-grid">
       <input type="text" name="metric_keys" placeholder="Metric key">
       <input type="text" name="metric_values" placeholder="Metric value">
-      <button type="button" class="remove-pair" aria-label="Remove metric">Remove</button>
+      <div class="pair-actions">
+        <button type="button" class="add-pair" aria-label="Add metric">+</button>
+        <button type="button" class="remove-pair" aria-label="Remove metric">-</button>
+      </div>
     </div>
   </template>
 
@@ -147,40 +160,71 @@
       const metricContainer = document.getElementById('metrics-container');
       const dimensionTemplate = document.getElementById('dimension-template');
       const metricTemplate = document.getElementById('metric-template');
-      const addDimensionButton = document.getElementById('add-dimension');
-      const addMetricButton = document.getElementById('add-metric');
 
-      function addPair(container, template) {
-        const clone = template.content.firstElementChild.cloneNode(true);
-        attachRemoveHandler(clone);
-        container.appendChild(clone);
-      }
+      function updatePairControls(container) {
+        const rows = Array.from(container.querySelectorAll('.pair-grid'));
+        rows.forEach((row, index) => {
+          const addButton = row.querySelector('.add-pair');
+          const removeButton = row.querySelector('.remove-pair');
 
-      function attachRemoveHandler(element) {
-        const button = element.querySelector('.remove-pair');
-        if (!button) {
-          return;
-        }
-        button.addEventListener('click', () => {
-          const parent = button.parentElement;
-          if (parent && parent.parentElement && parent.parentElement.children.length > 1) {
-            parent.remove();
-          } else if (parent) {
-            const inputs = parent.querySelectorAll('input');
-            inputs.forEach((input) => { input.value = ''; });
+          if (addButton) {
+            addButton.classList.toggle('hidden', index !== 0);
+          }
+
+          if (removeButton) {
+            removeButton.classList.toggle('hidden', index === 0);
           }
         });
       }
 
-      Array.from(document.querySelectorAll('.pair-grid')).forEach(attachRemoveHandler);
+      function addPair(container, template) {
+        const clone = template.content.firstElementChild.cloneNode(true);
+        attachHandlers(clone, container, template);
+        container.appendChild(clone);
+        updatePairControls(container);
+      }
 
-      addDimensionButton.addEventListener('click', () => {
+      function removePair(row, container) {
+        if (container.children.length > 1) {
+          row.remove();
+        } else {
+          row.querySelectorAll('input').forEach((input) => { input.value = ''; });
+        }
+        updatePairControls(container);
+      }
+
+      function attachHandlers(row, container, template) {
+        const addButton = row.querySelector('.add-pair');
+        const removeButton = row.querySelector('.remove-pair');
+
+        if (addButton) {
+          addButton.addEventListener('click', () => addPair(container, template));
+        }
+
+        if (removeButton) {
+          removeButton.addEventListener('click', () => removePair(row, container));
+        }
+      }
+
+      Array.from(dimensionContainer.querySelectorAll('.pair-grid')).forEach((row) => {
+        attachHandlers(row, dimensionContainer, dimensionTemplate);
+      });
+
+      Array.from(metricContainer.querySelectorAll('.pair-grid')).forEach((row) => {
+        attachHandlers(row, metricContainer, metricTemplate);
+      });
+
+      if (!dimensionContainer.children.length) {
         addPair(dimensionContainer, dimensionTemplate);
-      });
+      } else {
+        updatePairControls(dimensionContainer);
+      }
 
-      addMetricButton.addEventListener('click', () => {
+      if (!metricContainer.children.length) {
         addPair(metricContainer, metricTemplate);
-      });
+      } else {
+        updatePairControls(metricContainer);
+      }
     }());
   </script>
 </body>
