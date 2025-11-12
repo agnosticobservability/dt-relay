@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Tuple
 
-from flask import Blueprint, current_app, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, redirect, request, url_for
 
 from server import util
 
@@ -34,8 +34,8 @@ def form():
     ]
     defaults = _form_defaults()
 
-    return render_template(
-        "generic_form.html",
+    return bp.render_template(
+        "form.html",
         tenants=tenant_list,
         error=error,
         selected_tenants=selected,
@@ -182,8 +182,8 @@ def ingest():
 
     logger.info("Generic metrics ingest completed with overall status %s", overall_status)
 
-    return render_template(
-        "generic_results.html",
+    return bp.render_template(
+        "results.html",
         overall_status=overall_status,
         tenant_results=tenant_results,
     )
