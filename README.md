@@ -1,11 +1,17 @@
 # dt-relay
 
-dt-relay is a lightweight relay that ingests metrics into Dynatrace from curated tools. The first tool, `/dt-relay/datadomain`, turns Data Domain capacity values into Dynatrace metrics using the Metrics v2 API. The project is structured so additional tools can be added under `apps/` without touching the core server code.
+dt-relay is a lightweight relay that ingests metrics into Dynatrace from curated tools. It ships with two built-in experiences:
+
+- `/dt-relay/datadomain` turns Data Domain capacity values into Dynatrace metrics using the Metrics v2 API.
+- `/dt-relay/metrics` lets you submit arbitrary metrics with custom dimensions.
+
+The project is structured so additional tools can be added under `apps/` without touching the core server code.
 
 ## Features
 
 - HTTPS front-end terminated by Nginx on port 443
 - Server-rendered UI for entering Data Domain metrics
+- Generic metrics builder for arbitrary key/value pairs and dimensions
 - Multi-tenant Dynatrace support with shared or per-tenant tokens
 - Extensible architecture: add new apps under `apps/` and register automatically
 - Secure-by-default headers, no token echoing or logging
@@ -16,7 +22,8 @@ dt-relay is a lightweight relay that ingests metrics into Dynatrace from curated
 dt-relay/
 ├── apps/
 │   ├── core/                # shared templates (landing page)
-│   └── datadomain/          # Data Domain app implementation
+│   ├── datadomain/          # Data Domain app implementation
+│   └── metrics/             # Generic metrics builder app
 │       ├── metrics.py       # builds Dynatrace lines protocol payloads
 │       ├── routes.py        # form, ingest handler, health endpoint
 │       ├── templates/       # HTML templates for form and results
@@ -70,6 +77,9 @@ dt-relay/
    self-signed development certificate.
 
 4. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
+
+5. Visit <https://localhost/dt-relay/metrics> to submit generic metrics with
+   custom dimensions and values.
 
 ### Helper script
 
@@ -130,6 +140,11 @@ also updated automatically.
 | `DEFAULT_DIM_SYSTEM` | Default `system` dimension when the form is empty.             | `dd-system-01`  |
 | `DEFAULT_DIM_SITE`   | Default `site` dimension when the form is empty.               | `primary-dc`    |
 | `METRIC_PREFIX`      | Metric prefix when tenants do not specify their own.           | `custom.ddfs`   |
+| `METRICS_CUSTOM_LABELS` | Optional labels to attach to the `/metrics/` endpoint output. Accepts JSON or comma-separated `key=value` pairs. | `(blank)` |
+
+Set `METRICS_CUSTOM_LABELS` to decorate the Prometheus-style `/metrics/`
+endpoint with additional metadata. The value can be a JSON object or a comma-
+separated list of `key=value` pairs. Invalid entries are ignored and logged.
 
 ### Tenants
 
@@ -189,6 +204,20 @@ Synthetic monitors can confirm a successful ingest by verifying that the page co
 <div id="ingest-result">SUCCESS</div>
 ```
 
+## Generic Metrics App
+
+The generic metrics app at `/dt-relay/metrics` is ideal for one-off payloads or
+testing new metric definitions without adding code. Provide:
+
+- One or more Dynatrace tenants and either a shared token or per-tenant tokens.
+- Optional metric prefix overrides (defaults to the global `METRIC_PREFIX`).
+- Arbitrary dimension key/value pairs merged with tenant static dimensions.
+- Any number of metric name/value pairs; only numeric values generate lines.
+
+The form supports query-string prefill for keys, values, and timestamps using
+`dim_key`, `dim_value`, `metric_key`, `metric_value`, and `ts` parameters. Leave
+values blank to start from the configured defaults.
+
 ## Adding a New Subpage
 
 1. Create a directory under `apps/<slug>/` with `routes.py`, `metrics.py` (or other helpers), templates, and optional utilities.
@@ -204,3 +233,4 @@ Keep HTML simple and rely on server-side rendering. Avoid logging sensitive fiel
 2. Browse to `/dt-relay/datadomain` with prefilled query parameters.
 3. Choose one or more tenants, provide the site password and tokens. If the form displays a configuration warning, set `AUTH_PASSWORD` on the server first.
 4. Submit the form. The results page reports per-tenant status with payload previews. All successes display `<div id="ingest-result">SUCCESS</div>`.
+5. Optionally navigate to `/dt-relay/metrics` to experiment with custom metric names, values, and dimensions using the same tenants and tokens.

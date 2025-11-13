@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Tuple
 
-from flask import Blueprint, current_app, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, redirect, request, url_for
 
 from server import util
 
