@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Tuple
 
-from server import util
-
-
 def extract_pairs(keys: Iterable[str], values: Iterable[str]) -> Dict[str, str]:
     pairs: Dict[str, str] = {}
     for key, value in zip(keys, values):
@@ -31,10 +28,9 @@ def build_lines(
 
     lines: List[str] = []
     skipped: List[str] = []
-    sanitized_dims = util.sanitize_dims(dims)
     dims_fragment = ""
-    if sanitized_dims:
-        dims_fragment = "," + ",".join(f"{k}={v}" for k, v in sanitized_dims.items())
+    if dims:
+        dims_fragment = "," + ",".join(f"{k}={v}" for k, v in dims.items())
 
     for raw_key, raw_value in metric_items.items():
         metric_name = _format_metric_name(metric_prefix, raw_key)
