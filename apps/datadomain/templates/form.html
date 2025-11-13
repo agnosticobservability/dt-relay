@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Dynatrace Metrics Relay</title>
+  <title>Data Domain Metrics Relay</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: sans-serif; margin: 2rem; max-width: 960px; }
@@ -14,11 +14,10 @@
     .error { color: #b30000; margin-bottom: 1rem; font-weight: bold; }
     .warning { background: #fff4cd; border: 1px solid #f0c36d; padding: 0.75rem 1rem; margin-bottom: 1rem; }
     button { padding: 0.75rem 1.5rem; font-size: 1rem; }
-    .tokens details { margin-top: 0.75rem; }
   </style>
 </head>
 <body>
-  <h1>Dynatrace Metrics Relay</h1>
+  <h1>Data Domain Metrics Relay</h1>
   <p>Submit Data Domain metrics to one or more Dynatrace tenants.</p>
   {% if not auth_configured %}
     <div class="warning">
@@ -35,7 +34,7 @@
       <div class="checkbox-group">
         {% for tenant in tenants %}
           <label>
-            <input type="checkbox" name="tenant_ids" value="{{ tenant.id }}" {% if tenant.id in selected_tenants %}checked{% endif %}>
+            <input type="radio" name="tenant_ids" value="{{ tenant.id }}" {% if tenant.id in selected_tenants %}checked{% endif %}>
             {{ tenant.label }} ({{ tenant.id }})
           </label>
         {% endfor %}
@@ -47,19 +46,9 @@
       <label>Site password
         <input type="password" name="auth_password" required>
       </label>
-      <label>Global Dynatrace ingest token
-        <input type="password" name="dt_token" {% if require_global_token %}required{% endif %}>
+      <label>Dynatrace access token
+        <input type="password" name="dt_token" required>
       </label>
-      <div class="tokens">
-        <details>
-          <summary>Optional per-tenant tokens</summary>
-          {% for tenant in tenants %}
-            <label>{{ tenant.label }} override
-              <input type="password" name="dt_token__{{ tenant.id }}">
-            </label>
-          {% endfor %}
-        </details>
-      </div>
     </fieldset>
 
     <fieldset>
@@ -73,31 +62,48 @@
     </fieldset>
 
     <fieldset>
-      <legend>Metrics</legend>
-      <label>Total Space
-        <input type="text" name="totalSpace" value="{{ form_defaults.totalSpace }}">
+      <legend>Filesystem Capacity (bytes)</legend>
+      <label>Total Bytes
+        <input type="number" name="totalBytes" value="{{ form_defaults.totalBytes }}" min="0" step="1">
       </label>
-      <label>Used Space
-        <input type="text" name="usedSpace" value="{{ form_defaults.usedSpace }}">
+      <label>Used Bytes
+        <input type="number" name="usedBytes" value="{{ form_defaults.usedBytes }}" min="0" step="1">
       </label>
-      <label>Available Space
-        <input type="text" name="availableSpace" value="{{ form_defaults.availableSpace }}">
-      </label>
-      <label>Pre-compressed bytes
-        <input type="text" name="preComp" value="{{ form_defaults.preComp }}">
-      </label>
-      <label>Post-compressed bytes
-        <input type="text" name="postComp" value="{{ form_defaults.postComp }}">
-      </label>
-      <label>Total compression factor
-        <input type="text" name="totalCompFactor" value="{{ form_defaults.totalCompFactor }}">
+      <label>Available Bytes
+        <input type="number" name="availableBytes" value="{{ form_defaults.availableBytes }}" min="0" step="1">
       </label>
     </fieldset>
 
     <fieldset>
-      <legend>Timestamp</legend>
-      <label>Override timestamp (ms since epoch)
-        <input type="text" name="ts" value="{{ form_defaults.ts }}">
+      <legend>Alerts</legend>
+      <label>Critical Alerts
+        <input type="number" name="criticalAlerts" value="{{ form_defaults.criticalAlerts }}" min="0" step="1">
+      </label>
+      <label>Warning Alerts
+        <input type="number" name="warningAlerts" value="{{ form_defaults.warningAlerts }}" min="0" step="1">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Enclosures</legend>
+      <label>Normal Enclosures
+        <input type="number" name="enclosuresNormal" value="{{ form_defaults.enclosuresNormal }}" min="0" step="1">
+      </label>
+      <label>Degraded Enclosures
+        <input type="number" name="enclosuresDegraded" value="{{ form_defaults.enclosuresDegraded }}" min="0" step="1">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Drives</legend>
+      <label>Operational Drives
+        <input type="number" name="drivesOperational" value="{{ form_defaults.drivesOperational }}" min="0" step="1">
+      </label>
+      <label>Spare Drives
+        <input type="number" name="drivesSpare" value="{{ form_defaults.drivesSpare }}" min="0" step="1">
+      </label>
+      <label>Failed Drives
+        <input type="number" name="drivesFailed" value="{{ form_defaults.drivesFailed }}" min="0" step="1">
       </label>
     </fieldset>
 

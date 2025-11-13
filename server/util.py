@@ -4,7 +4,8 @@ import pathlib
 import re
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set
+from decimal import Decimal, InvalidOperation
+from typing import Dict, List, Optional
 
 import requests
 
@@ -149,28 +150,36 @@ def build_unit_metadata(metric_name: str, unit: Optional[str]) -> Optional[str]:
 
 
 NUMERIC_KEYS = {
-    "totalSpace": "total_space",
-    "usedSpace": "used_space",
-    "availableSpace": "available_space",
-    "preComp": "pre_compressed_bytes",
-    "postComp": "post_compressed_bytes",
-    "totalCompFactor": "compression_factor",
+    "totalBytes": "filesystem.total.bytes",
+    "usedBytes": "filesystem.used.bytes",
+    "availableBytes": "filesystem.available.bytes",
+    "criticalAlerts": "alerts.critical.count",
+    "warningAlerts": "alerts.warning.count",
+    "enclosuresNormal": "enclosures.normal.count",
+    "enclosuresDegraded": "enclosures.degraded.count",
+    "drivesOperational": "drives.operational.count",
+    "drivesSpare": "drives.spare.count",
+    "drivesFailed": "drives.failed.count",
 }
 
 
 class MetricsBuilder:
-    def __init__(self, metric_prefix: str, dims: Dict[str, str], timestamp_ms: int):
+    def __init__(
+        self,
+        metric_prefix: str,
+        dims: Dict[str, str],
+        timestamp_ms: Optional[int],
+    ):
         self.metric_prefix = metric_prefix
         self.dims = sanitize_dims(dims)
         self.timestamp_ms = timestamp_ms
-        self._metadata_sent: Set[str] = set()
 
     def build_line(
         self, metric_suffix: str, value: str, unit: Optional[str] = None
     ) -> List[str]:
         try:
-            numeric_value = float(value)
-        except (TypeError, ValueError):
+            numeric_value = Decimal(str(value))
+        except (InvalidOperation, TypeError):
             return []
 
         metric_name = normalise_metric_key(self.metric_prefix, metric_suffix)
@@ -183,16 +192,16 @@ class MetricsBuilder:
         else:
             metric_fragment = metric_name
 
-        lines: List[str] = []
-        metadata_line = None
-        if unit and metric_name not in self._metadata_sent:
-            metadata_line = build_unit_metadata(metric_name, unit)
-            if metadata_line:
-                lines.append(metadata_line)
-                self._metadata_sent.add(metric_name)
+        if numeric_value == numeric_value.to_integral():
+            normalized = numeric_value.quantize(Decimal("1"))
+        else:
+            normalized = numeric_value.normalize()
+        value_fragment = format(normalized, "f")
 
-        lines.append(f"{metric_fragment} {numeric_value} {self.timestamp_ms}")
-        return lines
+        if self.timestamp_ms is not None:
+            return [f"{metric_fragment} {value_fragment} {self.timestamp_ms}"]
+
+        return [f"{metric_fragment} {value_fragment}"]
 
     def from_form(
         self, form_data: Dict[str, str], units: Optional[Dict[str, str]] = None
