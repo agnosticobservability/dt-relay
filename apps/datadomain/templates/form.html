@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Dynatrace Metrics Relay</title>
+  <title>Data Domain Metrics Relay</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: sans-serif; margin: 2rem; max-width: 960px; }
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h1>Dynatrace Metrics Relay</h1>
+  <h1>Data Domain Metrics Relay</h1>
   <p>Submit Data Domain metrics to one or more Dynatrace tenants.</p>
   {% if not auth_configured %}
     <div class="warning">
@@ -35,7 +35,7 @@
       <div class="checkbox-group">
         {% for tenant in tenants %}
           <label>
-            <input type="checkbox" name="tenant_ids" value="{{ tenant.id }}" {% if tenant.id in selected_tenants %}checked{% endif %}>
+            <input type="radio" name="tenant_ids" value="{{ tenant.id }}" {% if tenant.id in selected_tenants %}checked{% endif %}>
             {{ tenant.label }} ({{ tenant.id }})
           </label>
         {% endfor %}
@@ -46,9 +46,6 @@
       <legend>Authentication</legend>
       <label>Site password
         <input type="password" name="auth_password" required>
-      </label>
-      <label>Global Dynatrace ingest token
-        <input type="password" name="dt_token" {% if require_global_token %}required{% endif %}>
       </label>
       <div class="tokens">
         <details>
@@ -82,22 +79,6 @@
       </label>
       <label>Available Space
         <input type="text" name="availableSpace" value="{{ form_defaults.availableSpace }}">
-      </label>
-      <label>Pre-compressed bytes
-        <input type="text" name="preComp" value="{{ form_defaults.preComp }}">
-      </label>
-      <label>Post-compressed bytes
-        <input type="text" name="postComp" value="{{ form_defaults.postComp }}">
-      </label>
-      <label>Total compression factor
-        <input type="text" name="totalCompFactor" value="{{ form_defaults.totalCompFactor }}">
-      </label>
-    </fieldset>
-
-    <fieldset>
-      <legend>Timestamp</legend>
-      <label>Override timestamp (ms since epoch)
-        <input type="text" name="ts" value="{{ form_defaults.ts }}">
       </label>
     </fieldset>
 

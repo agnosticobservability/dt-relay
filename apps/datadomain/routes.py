@@ -33,7 +33,6 @@ def form():
         tenants=tenant_list,
         error=error,
         selected_tenants=selected,
-        require_global_token=False,
         form_defaults=defaults,
         auth_configured=bool(current_app.config.get("AUTH_PASSWORD")),
     )
@@ -61,9 +60,7 @@ def ingest():
     if not tenant_ids:
         return redirect(url_for("datadomain.form", error="Select at least one tenant."))
 
-    global_token = form_data.get("dt_token")
-
-    timestamp_ms = _parse_timestamp(form_data.get("ts"))
+    timestamp_ms = util.current_time_ms()
 
     tenant_results: List[Dict[str, object]] = []
     overall_success = True
@@ -85,8 +82,7 @@ def ingest():
             overall_success = False
             continue
 
-        token_override = form_data.get(f"dt_token__{tenant.id}")
-        token_to_use = token_override or global_token
+        token_to_use = form_data.get(f"dt_token__{tenant.id}")
         if not token_to_use:
             tenant_results.append(
                 {
@@ -180,18 +176,5 @@ def _form_defaults():
         "totalSpace": request.args.get("totalSpace", ""),
         "usedSpace": request.args.get("usedSpace", ""),
         "availableSpace": request.args.get("availableSpace", ""),
-        "preComp": request.args.get("preComp", ""),
-        "postComp": request.args.get("postComp", ""),
-        "totalCompFactor": request.args.get("totalCompFactor", ""),
-        "ts": request.args.get("ts", ""),
     }
     return defaults
-
-
-def _parse_timestamp(ts_value: str) -> int:
-    if ts_value:
-        try:
-            return int(float(ts_value))
-        except ValueError:
-            pass
-    return util.current_time_ms()
