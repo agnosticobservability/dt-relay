@@ -60,6 +60,10 @@ def ingest():
     if not tenant_ids:
         return redirect(url_for("datadomain.form", error="Select at least one tenant."))
 
+    dt_token = form_data.get("dt_token")
+    if not dt_token:
+        return redirect(url_for("datadomain.form", error="Provide a Dynatrace access token."))
+
     timestamp_ms = util.current_time_ms()
 
     tenant_results: List[Dict[str, object]] = []
@@ -75,20 +79,6 @@ def ingest():
                     "label": tenant_id,
                     "status": "n/a",
                     "message": "Unknown tenant",
-                    "success": False,
-                    "lines": "",
-                }
-            )
-            overall_success = False
-            continue
-
-        token_to_use = form_data.get(f"dt_token__{tenant.id}")
-        if not token_to_use:
-            tenant_results.append(
-                {
-                    "label": tenant.label,
-                    "status": "n/a",
-                    "message": "Missing token",
                     "success": False,
                     "lines": "",
                 }
@@ -120,7 +110,7 @@ def ingest():
             continue
 
         try:
-            response = util.post_metrics(tenant, token_to_use, lines)
+            response = util.post_metrics(tenant, dt_token, lines)
             success = response.status_code in (200, 202)
             message = "Ingest accepted" if success else response.text or "Ingest failed"
             logger.info(

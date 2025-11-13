@@ -14,7 +14,6 @@
     .error { color: #b30000; margin-bottom: 1rem; font-weight: bold; }
     .warning { background: #fff4cd; border: 1px solid #f0c36d; padding: 0.75rem 1rem; margin-bottom: 1rem; }
     button { padding: 0.75rem 1.5rem; font-size: 1rem; }
-    .tokens details { margin-top: 0.75rem; }
   </style>
 </head>
 <body>
@@ -47,16 +46,9 @@
       <label>Site password
         <input type="password" name="auth_password" required>
       </label>
-      <div class="tokens">
-        <details>
-          <summary>Optional per-tenant tokens</summary>
-          {% for tenant in tenants %}
-            <label>{{ tenant.label }} override
-              <input type="password" name="dt_token__{{ tenant.id }}">
-            </label>
-          {% endfor %}
-        </details>
-      </div>
+      <label>Dynatrace access token
+        <input type="password" name="dt_token" required>
+      </label>
     </fieldset>
 
     <fieldset>
