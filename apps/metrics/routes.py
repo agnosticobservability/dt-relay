@@ -72,6 +72,7 @@ def ingest():
     global_token = form_data.get("dt_token")
     timestamp_ms = _parse_timestamp(form_data.get("ts"))
     metric_prefix = form_data.get("metric_prefix") or current_app.config["METRIC_PREFIX"]
+    metric_unit = form_data.get("metric_unit")
 
     dimension_pairs = metrics.extract_pairs(
         form_data.getlist("dim_keys"), form_data.getlist("dim_values")
@@ -127,6 +128,7 @@ def ingest():
             metric_prefix=metric_prefix,
             dims=merged_dims,
             timestamp_ms=timestamp_ms,
+            unit=metric_unit,
         )
 
         if not lines:
@@ -197,6 +199,7 @@ def _form_defaults() -> Dict[str, str]:
     return {
         "metric_prefix": request.args.get("metric_prefix")
         or current_app.config["METRIC_PREFIX"],
+        "metric_unit": request.args.get("metric_unit", ""),
         "ts": request.args.get("ts", ""),
     }
 

@@ -4,7 +4,7 @@ import pathlib
 import re
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 import requests
 
@@ -134,6 +134,20 @@ def sanitize_dims(values: Dict[str, str]) -> Dict[str, str]:
     return sanitized
 
 
+def escape_metadata_value(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def build_unit_metadata(metric_name: str, unit: Optional[str]) -> Optional[str]:
+    if not unit:
+        return None
+    cleaned = unit.strip()
+    if not cleaned:
+        return None
+    escaped = escape_metadata_value(cleaned)
+    return f"#{metric_name} gauge dt.meta.unit=\"{escaped}\""
+
+
 NUMERIC_KEYS = {
     "totalSpace": "total_space",
     "usedSpace": "used_space",
@@ -149,30 +163,47 @@ class MetricsBuilder:
         self.metric_prefix = metric_prefix
         self.dims = sanitize_dims(dims)
         self.timestamp_ms = timestamp_ms
+        self._metadata_sent: Set[str] = set()
 
-    def build_line(self, metric_suffix: str, value: str) -> Optional[str]:
+    def build_line(
+        self, metric_suffix: str, value: str, unit: Optional[str] = None
+    ) -> List[str]:
         try:
             numeric_value = float(value)
         except (TypeError, ValueError):
-            return None
+            return []
 
         metric_name = normalise_metric_key(self.metric_prefix, metric_suffix)
         if not metric_name:
-            return None
+            return []
 
         dims = ",".join(f"{k}={v}" for k, v in self.dims.items())
         if dims:
             metric_fragment = f"{metric_name},{dims}"
         else:
             metric_fragment = metric_name
-        return f"{metric_fragment} {numeric_value} {self.timestamp_ms}"
 
-    def from_form(self, form_data: Dict[str, str]) -> List[str]:
         lines: List[str] = []
+        metadata_line = None
+        if unit and metric_name not in self._metadata_sent:
+            metadata_line = build_unit_metadata(metric_name, unit)
+            if metadata_line:
+                lines.append(metadata_line)
+                self._metadata_sent.add(metric_name)
+
+        lines.append(f"{metric_fragment} {numeric_value} {self.timestamp_ms}")
+        return lines
+
+    def from_form(
+        self, form_data: Dict[str, str], units: Optional[Dict[str, str]] = None
+    ) -> List[str]:
+        lines: List[str] = []
+        unit_map = units or {}
         for key, suffix in NUMERIC_KEYS.items():
-            line = self.build_line(suffix, form_data.get(key))
-            if line:
-                lines.append(line)
+            unit = unit_map.get(key)
+            line_entries = self.build_line(suffix, form_data.get(key), unit=unit)
+            if line_entries:
+                lines.extend(line_entries)
         return lines
 
 
