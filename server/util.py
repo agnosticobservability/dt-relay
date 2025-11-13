@@ -1,5 +1,4 @@
 import json
-import os
 import pathlib
 import re
 import time
@@ -52,13 +51,6 @@ class TenantRegistry:
             tenants[tenant.id] = tenant
         cls._tenants = tenants
         return tenants
-
-
-def get_env(name: str, default: Optional[str] = None) -> str:
-    value = os.getenv(name, default)
-    if value is None:
-        raise RuntimeError(f"Environment variable {name} is required")
-    return value
 
 
 _KEY_INVALID_CHARS = re.compile(r"[^a-zA-Z0-9_.:-]")
@@ -149,20 +141,6 @@ def build_unit_metadata(metric_name: str, unit: Optional[str]) -> Optional[str]:
     return f"#{metric_name} gauge dt.meta.unit=\"{escaped}\""
 
 
-NUMERIC_KEYS = {
-    "totalBytes": "filesystem.total.bytes",
-    "usedBytes": "filesystem.used.bytes",
-    "availableBytes": "filesystem.available.bytes",
-    "criticalAlerts": "alerts.critical.count",
-    "warningAlerts": "alerts.warning.count",
-    "enclosuresNormal": "enclosures.normal.count",
-    "enclosuresDegraded": "enclosures.degraded.count",
-    "drivesOperational": "drives.operational.count",
-    "drivesSpare": "drives.spare.count",
-    "drivesFailed": "drives.failed.count",
-}
-
-
 class MetricsBuilder:
     def __init__(
         self,
@@ -214,28 +192,8 @@ class MetricsBuilder:
         lines.append(data_line)
         return lines
 
-    def from_form(
-        self, form_data: Dict[str, str], units: Optional[Dict[str, str]] = None
-    ) -> List[str]:
-        lines: List[str] = []
-        unit_map = units or {}
-        for key, suffix in NUMERIC_KEYS.items():
-            unit = unit_map.get(key)
-            line_entries = self.build_line(suffix, form_data.get(key), unit=unit)
-            if line_entries:
-                lines.extend(line_entries)
-        return lines
-
-
 def current_time_ms() -> int:
     return int(time.time() * 1000)
-
-
-class IngestError(Exception):
-    def __init__(self, status_code: int, message: str):
-        super().__init__(message)
-        self.status_code = status_code
-        self.message = message
 
 
 def post_metrics(tenant: Tenant, token: str, lines: List[str]) -> requests.Response:
