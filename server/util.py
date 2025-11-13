@@ -152,9 +152,8 @@ NUMERIC_KEYS = {
     "totalSpace": "total_space",
     "usedSpace": "used_space",
     "availableSpace": "available_space",
-    "preComp": "pre_compressed_bytes",
-    "postComp": "post_compressed_bytes",
-    "totalCompFactor": "compression_factor",
+    "criticalAlerts": "critical_alerts",
+    "warningAlerts": "warning_alerts",
 }
 
 

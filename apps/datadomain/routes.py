@@ -33,7 +33,6 @@ def form():
         tenants=tenant_list,
         error=error,
         selected_tenants=selected,
-        require_global_token=False,
         form_defaults=defaults,
         auth_configured=bool(current_app.config.get("AUTH_PASSWORD")),
     )
@@ -61,9 +60,11 @@ def ingest():
     if not tenant_ids:
         return redirect(url_for("datadomain.form", error="Select at least one tenant."))
 
-    global_token = form_data.get("dt_token")
+    dt_token = form_data.get("dt_token")
+    if not dt_token:
+        return redirect(url_for("datadomain.form", error="Provide a Dynatrace access token."))
 
-    timestamp_ms = _parse_timestamp(form_data.get("ts"))
+    timestamp_ms = util.current_time_ms()
 
     tenant_results: List[Dict[str, object]] = []
     overall_success = True
@@ -78,21 +79,6 @@ def ingest():
                     "label": tenant_id,
                     "status": "n/a",
                     "message": "Unknown tenant",
-                    "success": False,
-                    "lines": "",
-                }
-            )
-            overall_success = False
-            continue
-
-        token_override = form_data.get(f"dt_token__{tenant.id}")
-        token_to_use = token_override or global_token
-        if not token_to_use:
-            tenant_results.append(
-                {
-                    "label": tenant.label,
-                    "status": "n/a",
-                    "message": "Missing token",
                     "success": False,
                     "lines": "",
                 }
@@ -124,7 +110,7 @@ def ingest():
             continue
 
         try:
-            response = util.post_metrics(tenant, token_to_use, lines)
+            response = util.post_metrics(tenant, dt_token, lines)
             success = response.status_code in (200, 202)
             message = "Ingest accepted" if success else response.text or "Ingest failed"
             logger.info(
@@ -180,18 +166,7 @@ def _form_defaults():
         "totalSpace": request.args.get("totalSpace", ""),
         "usedSpace": request.args.get("usedSpace", ""),
         "availableSpace": request.args.get("availableSpace", ""),
-        "preComp": request.args.get("preComp", ""),
-        "postComp": request.args.get("postComp", ""),
-        "totalCompFactor": request.args.get("totalCompFactor", ""),
-        "ts": request.args.get("ts", ""),
+        "criticalAlerts": request.args.get("criticalAlerts", ""),
+        "warningAlerts": request.args.get("warningAlerts", ""),
     }
     return defaults
-
-
-def _parse_timestamp(ts_value: str) -> int:
-    if ts_value:
-        try:
-            return int(float(ts_value))
-        except ValueError:
-            pass
-    return util.current_time_ms()
