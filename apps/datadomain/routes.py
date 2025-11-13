@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 
@@ -33,7 +33,6 @@ def form():
         tenants=tenant_list,
         error=error,
         selected_tenants=selected,
-        require_global_token=False,
         form_defaults=defaults,
         auth_configured=bool(current_app.config.get("AUTH_PASSWORD")),
     )
@@ -61,9 +60,11 @@ def ingest():
     if not tenant_ids:
         return redirect(url_for("datadomain.form", error="Select at least one tenant."))
 
-    global_token = form_data.get("dt_token")
+    dt_token = form_data.get("dt_token")
+    if not dt_token:
+        return redirect(url_for("datadomain.form", error="Provide a Dynatrace access token."))
 
-    timestamp_ms = _parse_timestamp(form_data.get("ts"))
+    timestamp_ms = util.current_time_ms()
 
     tenant_results: List[Dict[str, object]] = []
     overall_success = True
@@ -85,26 +86,26 @@ def ingest():
             overall_success = False
             continue
 
-        token_override = form_data.get(f"dt_token__{tenant.id}")
-        token_to_use = token_override or global_token
-        if not token_to_use:
-            tenant_results.append(
-                {
-                    "label": tenant.label,
-                    "status": "n/a",
-                    "message": "Missing token",
-                    "success": False,
-                    "lines": "",
-                }
-            )
-            overall_success = False
-            continue
-
         logger.info("Preparing ingest payload for tenant %s", tenant.id)
 
+        host_value = _first_non_empty(form_data.get("host"), form_data.get("system"))
+        environment_value = _first_non_empty(
+            form_data.get("environment"), form_data.get("site")
+        )
+
+        if not host_value or not environment_value:
+            return redirect(
+                url_for(
+                    "datadomain.form",
+                    error="Provide both host and environment.",
+                    host=host_value,
+                    environment=environment_value,
+                )
+            )
+
         dims = {
-            "system": form_data.get("system") or current_app.config["DEFAULT_DIM_SYSTEM"],
-            "site": form_data.get("site") or current_app.config["DEFAULT_DIM_SITE"],
+            "host": host_value,
+            "environment": environment_value,
         }
         merged_dims = util.merge_dimensions(tenant.static_dims, dims)
         metric_prefix = tenant.metric_prefix or current_app.config["METRIC_PREFIX"]
@@ -124,7 +125,7 @@ def ingest():
             continue
 
         try:
-            response = util.post_metrics(tenant, token_to_use, lines)
+            response = util.post_metrics(tenant, dt_token, lines)
             success = response.status_code in (200, 202)
             message = "Ingest accepted" if success else response.text or "Ingest failed"
             logger.info(
@@ -173,25 +174,31 @@ def register(app):
     return bp, METADATA
 
 
+def _first_non_empty(*candidates: Optional[str]) -> str:
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        stripped = candidate.strip()
+        if stripped:
+            return stripped
+    return ""
+
+
 def _form_defaults():
+    host_arg = request.args.get("host") or request.args.get("system")
+    environment_arg = request.args.get("environment") or request.args.get("site")
     defaults = {
-        "system": request.args.get("system") or current_app.config["DEFAULT_DIM_SYSTEM"],
-        "site": request.args.get("site") or current_app.config["DEFAULT_DIM_SITE"],
-        "totalSpace": request.args.get("totalSpace", ""),
-        "usedSpace": request.args.get("usedSpace", ""),
-        "availableSpace": request.args.get("availableSpace", ""),
-        "preComp": request.args.get("preComp", ""),
-        "postComp": request.args.get("postComp", ""),
-        "totalCompFactor": request.args.get("totalCompFactor", ""),
-        "ts": request.args.get("ts", ""),
+        "host": _first_non_empty(host_arg),
+        "environment": _first_non_empty(environment_arg),
+        "totalBytes": request.args.get("totalBytes", ""),
+        "usedBytes": request.args.get("usedBytes", ""),
+        "availableBytes": request.args.get("availableBytes", ""),
+        "criticalAlerts": request.args.get("criticalAlerts", ""),
+        "warningAlerts": request.args.get("warningAlerts", ""),
+        "enclosuresNormal": request.args.get("enclosuresNormal", ""),
+        "enclosuresDegraded": request.args.get("enclosuresDegraded", ""),
+        "drivesOperational": request.args.get("drivesOperational", ""),
+        "drivesSpare": request.args.get("drivesSpare", ""),
+        "drivesFailed": request.args.get("drivesFailed", ""),
     }
     return defaults
-
-
-def _parse_timestamp(ts_value: str) -> int:
-    if ts_value:
-        try:
-            return int(float(ts_value))
-        except ValueError:
-            pass
-    return util.current_time_ms()

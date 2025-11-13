@@ -65,8 +65,14 @@ def create_app() -> Flask:
     configure_logging()
     app = Flask(__name__, template_folder=str(APPS_DIR / "core"))
     app.config["AUTH_PASSWORD"] = os.getenv("AUTH_PASSWORD", "")
-    app.config["DEFAULT_DIM_SYSTEM"] = os.getenv("DEFAULT_DIM_SYSTEM", "dd-system-01")
-    app.config["DEFAULT_DIM_SITE"] = os.getenv("DEFAULT_DIM_SITE", "primary-dc")
+    default_host = os.getenv("DEFAULT_DIM_HOST") or os.getenv(
+        "DEFAULT_DIM_SYSTEM", "dd-system-01"
+    )
+    default_environment = os.getenv("DEFAULT_DIM_ENVIRONMENT") or os.getenv(
+        "DEFAULT_DIM_SITE", "primary-dc"
+    )
+    app.config["DEFAULT_DIM_HOST"] = default_host
+    app.config["DEFAULT_DIM_ENVIRONMENT"] = default_environment
     app.config["METRIC_PREFIX"] = os.getenv("METRIC_PREFIX", "custom.ddfs")
     app.config["METRICS_CUSTOM_LABELS"] = _parse_custom_metric_labels(
         os.getenv("METRICS_CUSTOM_LABELS", "")
