@@ -122,8 +122,8 @@ also updated automatically.
 
    ```bash
    export AUTH_PASSWORD="super-secret"
-   export DEFAULT_DIM_SYSTEM="dd-prod"
-   export DEFAULT_DIM_SITE="primary"
+   export DEFAULT_DIM_HOST="dd-prod"
+   export DEFAULT_DIM_ENVIRONMENT="primary"
    export METRIC_PREFIX="custom.ddfs"
    docker compose up -d --build
    ```
@@ -137,8 +137,8 @@ also updated automatically.
 | Variable             | Description                                                    | Default         |
 |----------------------|----------------------------------------------------------------|-----------------|
 | `AUTH_PASSWORD`      | Required password to submit the form.                          | `(blank)` (set explicitly) |
-| `DEFAULT_DIM_SYSTEM` | Default `system` dimension when the form is empty.             | `dd-system-01`  |
-| `DEFAULT_DIM_SITE`   | Default `site` dimension when the form is empty.               | `primary-dc`    |
+| `DEFAULT_DIM_HOST`   | Default `host` dimension when the form is empty.               | `dd-system-01`  |
+| `DEFAULT_DIM_ENVIRONMENT` | Default `environment` dimension when the form is empty.         | `primary-dc`    |
 | `METRIC_PREFIX`      | Metric prefix when tenants do not specify their own.           | `custom.ddfs`   |
 | `METRICS_CUSTOM_LABELS` | Optional labels to attach to the `/metrics/` endpoint output. Accepts JSON or comma-separated `key=value` pairs. | `(blank)` |
 
@@ -193,7 +193,7 @@ The response should be `ok` with status `200`.
 You can pre-fill the Data Domain form using query parameters:
 
 ```
-https://<your-host>/dt-relay/datadomain?system=dd-system-01&site=primary-dc&totalSpace=543.5&usedSpace=443.43&availableSpace=100.07&preComp=632023121083777&postComp=75624078408985&totalCompFactor=8.3531
+https://<your-host>/dt-relay/datadomain?host=dd-system-01&environment=primary-dc&totalBytes=597584569696256&usedBytes=493636740406313&availableBytes=103947829289943
 ```
 
 ## Synthetic Validation Tip
