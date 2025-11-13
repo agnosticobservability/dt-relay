@@ -25,8 +25,8 @@ def build_lines(
 ) -> Tuple[List[str], List[str]]:
     """Return metric lines and skipped metric keys.
 
-    Metric names are normalised by replacing whitespace with underscores
-    and prepending the metric prefix when provided.
+    Metric keys are normalised to comply with Dynatrace's ingestion
+    protocol before being combined with the optional prefix.
     """
 
     lines: List[str] = []
@@ -37,7 +37,7 @@ def build_lines(
         dims_fragment = "," + ",".join(f"{k}={v}" for k, v in sanitized_dims.items())
 
     for raw_key, raw_value in metric_items.items():
-        metric_name = _format_metric_name(metric_prefix, raw_key)
+        metric_name = util.normalise_metric_key(metric_prefix, raw_key)
         if not metric_name:
             skipped.append(raw_key)
             continue
@@ -51,14 +51,3 @@ def build_lines(
 
     return lines, skipped
 
-
-def _format_metric_name(metric_prefix: str, metric_key: str) -> str:
-    cleaned = (metric_key or "").strip()
-    if not cleaned:
-        return ""
-    cleaned = "_".join(cleaned.split())
-    if metric_prefix:
-        if cleaned.startswith(metric_prefix):
-            return cleaned
-        return f"{metric_prefix}.{cleaned}"
-    return cleaned

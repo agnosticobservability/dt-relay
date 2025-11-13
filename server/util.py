@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import re
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional
@@ -59,6 +60,34 @@ def get_env(name: str, default: Optional[str] = None) -> str:
     return value
 
 
+_KEY_INVALID_CHARS = re.compile(r"[^a-zA-Z0-9_.:-]")
+_METRIC_KEY_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_.:-]*$")
+_DIM_KEY_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_.:-]*$")
+
+
+def _normalise_key(raw: Optional[str]) -> str:
+    """Return a Dynatrace compatible metric or dimension key fragment."""
+
+    if raw is None:
+        return ""
+
+    cleaned = raw.strip().replace(" ", "_")
+    if not cleaned:
+        return ""
+
+    cleaned = _KEY_INVALID_CHARS.sub("_", cleaned)
+    cleaned = re.sub(r"_+", "_", cleaned)
+    cleaned = cleaned.strip("_.:-")
+
+    if not cleaned:
+        return ""
+
+    if not cleaned[0].isalpha():
+        return ""
+
+    return cleaned
+
+
 def escape_dimension(value: str) -> str:
     replacers = {"\\": "\\\\", ",": "\\,", " ": "\\ ", "=": "\\="}
     escaped = []
@@ -67,8 +96,42 @@ def escape_dimension(value: str) -> str:
     return "".join(escaped)
 
 
+def normalise_dimension_key(raw_key: Optional[str]) -> str:
+    key = _normalise_key(raw_key)
+    if key and _DIM_KEY_PATTERN.match(key):
+        return key
+    return ""
+
+
+def normalise_metric_key(metric_prefix: Optional[str], raw_key: Optional[str]) -> str:
+    suffix = _normalise_key(raw_key)
+    if not suffix:
+        return ""
+
+    prefix = _normalise_key(metric_prefix)
+    if prefix:
+        if suffix.startswith(prefix):
+            candidate = suffix
+        else:
+            candidate = f"{prefix}.{suffix}"
+    else:
+        candidate = suffix
+
+    if _METRIC_KEY_PATTERN.match(candidate):
+        return candidate
+    return ""
+
+
 def sanitize_dims(values: Dict[str, str]) -> Dict[str, str]:
-    return {k: escape_dimension(str(v)) for k, v in values.items() if v not in (None, "")}
+    sanitized: Dict[str, str] = {}
+    for raw_key, raw_value in values.items():
+        if raw_value in (None, ""):
+            continue
+        key = normalise_dimension_key(raw_key)
+        if not key:
+            continue
+        sanitized[key] = escape_dimension(str(raw_value))
+    return sanitized
 
 
 NUMERIC_KEYS = {
@@ -84,7 +147,7 @@ NUMERIC_KEYS = {
 class MetricsBuilder:
     def __init__(self, metric_prefix: str, dims: Dict[str, str], timestamp_ms: int):
         self.metric_prefix = metric_prefix
-        self.dims = dims
+        self.dims = sanitize_dims(dims)
         self.timestamp_ms = timestamp_ms
 
     def build_line(self, metric_suffix: str, value: str) -> Optional[str]:
@@ -93,9 +156,16 @@ class MetricsBuilder:
         except (TypeError, ValueError):
             return None
 
-        metric_name = f"{self.metric_prefix}.{metric_suffix}"
+        metric_name = normalise_metric_key(self.metric_prefix, metric_suffix)
+        if not metric_name:
+            return None
+
         dims = ",".join(f"{k}={v}" for k, v in self.dims.items())
-        return f"{metric_name},{dims} {numeric_value} {self.timestamp_ms}"
+        if dims:
+            metric_fragment = f"{metric_name},{dims}"
+        else:
+            metric_fragment = metric_name
+        return f"{metric_fragment} {numeric_value} {self.timestamp_ms}"
 
     def from_form(self, form_data: Dict[str, str]) -> List[str]:
         lines: List[str] = []
@@ -132,4 +202,4 @@ def merge_dimensions(*dicts: Dict[str, str]) -> Dict[str, str]:
     merged: Dict[str, str] = {}
     for d in dicts:
         merged.update({k: v for k, v in (d or {}).items() if v not in (None, "")})
-    return sanitize_dims(merged)
+    return merged
