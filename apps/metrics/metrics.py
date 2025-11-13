@@ -31,10 +31,12 @@ def build_lines(
 
     lines: List[str] = []
     skipped: List[str] = []
-    sanitized_dims = util.sanitize_dims(dims)
+    # ``dims`` is expected to be sanitized by the caller (``merge_dimensions``)
+    # so avoid escaping the values a second time, which would introduce
+    # additional backslashes into the payload.
     dims_fragment = ""
-    if sanitized_dims:
-        dims_fragment = "," + ",".join(f"{k}={v}" for k, v in sanitized_dims.items())
+    if dims:
+        dims_fragment = "," + ",".join(f"{k}={v}" for k, v in dims.items())
 
     for raw_key, raw_value in metric_items.items():
         metric_name = _format_metric_name(metric_prefix, raw_key)
