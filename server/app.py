@@ -9,7 +9,7 @@ from typing import Dict, List, Mapping
 
 from flask import Flask, Response, render_template, url_for
 
-from . import util
+from server import util
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 APPS_DIR = BASE_DIR / "apps"
