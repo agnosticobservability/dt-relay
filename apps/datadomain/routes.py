@@ -166,5 +166,7 @@ def _form_defaults():
         "totalSpace": request.args.get("totalSpace", ""),
         "usedSpace": request.args.get("usedSpace", ""),
         "availableSpace": request.args.get("availableSpace", ""),
+        "criticalAlerts": request.args.get("criticalAlerts", ""),
+        "warningAlerts": request.args.get("warningAlerts", ""),
     }
     return defaults

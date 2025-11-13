@@ -152,6 +152,8 @@ NUMERIC_KEYS = {
     "totalSpace": "total_space",
     "usedSpace": "used_space",
     "availableSpace": "available_space",
+    "criticalAlerts": "critical_alerts",
+    "warningAlerts": "warning_alerts",
 }
 
 

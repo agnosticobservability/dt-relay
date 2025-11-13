@@ -72,6 +72,12 @@
       <label>Available Space
         <input type="text" name="availableSpace" value="{{ form_defaults.availableSpace }}">
       </label>
+      <label>Critical Alerts
+        <input type="number" name="criticalAlerts" value="{{ form_defaults.criticalAlerts }}" min="0">
+      </label>
+      <label>Warning Alerts
+        <input type="number" name="warningAlerts" value="{{ form_defaults.warningAlerts }}" min="0">
+      </label>
     </fieldset>
 
     <button type="submit">Submit</button>
