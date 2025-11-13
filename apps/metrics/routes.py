@@ -220,8 +220,8 @@ def _initial_pairs(param_prefix: str) -> List[Tuple[str, str]]:
     values = request.args.getlist(values_param)
     if not keys and param_prefix == "dim":
         return [
-            ("system", current_app.config["DEFAULT_DIM_SYSTEM"]),
-            ("site", current_app.config["DEFAULT_DIM_SITE"]),
+            ("host", current_app.config["DEFAULT_DIM_HOST"]),
+            ("environment", current_app.config["DEFAULT_DIM_ENVIRONMENT"]),
         ]
     pairs: List[Tuple[str, str]] = []
     for key, value in zip(keys, values):

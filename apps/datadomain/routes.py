@@ -89,8 +89,16 @@ def ingest():
         logger.info("Preparing ingest payload for tenant %s", tenant.id)
 
         dims = {
-            "system": form_data.get("system") or current_app.config["DEFAULT_DIM_SYSTEM"],
-            "site": form_data.get("site") or current_app.config["DEFAULT_DIM_SITE"],
+            "host": (
+                form_data.get("host")
+                or form_data.get("system")
+                or current_app.config["DEFAULT_DIM_HOST"]
+            ),
+            "environment": (
+                form_data.get("environment")
+                or form_data.get("site")
+                or current_app.config["DEFAULT_DIM_ENVIRONMENT"]
+            ),
         }
         merged_dims = util.merge_dimensions(tenant.static_dims, dims)
         metric_prefix = tenant.metric_prefix or current_app.config["METRIC_PREFIX"]
@@ -160,9 +168,12 @@ def register(app):
 
 
 def _form_defaults():
+    host_arg = request.args.get("host") or request.args.get("system")
+    environment_arg = request.args.get("environment") or request.args.get("site")
     defaults = {
-        "system": request.args.get("system") or current_app.config["DEFAULT_DIM_SYSTEM"],
-        "site": request.args.get("site") or current_app.config["DEFAULT_DIM_SITE"],
+        "host": host_arg or current_app.config["DEFAULT_DIM_HOST"],
+        "environment": environment_arg
+        or current_app.config["DEFAULT_DIM_ENVIRONMENT"],
         "totalBytes": request.args.get("totalBytes", ""),
         "usedBytes": request.args.get("usedBytes", ""),
         "availableBytes": request.args.get("availableBytes", ""),
