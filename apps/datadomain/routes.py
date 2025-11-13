@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 
@@ -88,17 +88,24 @@ def ingest():
 
         logger.info("Preparing ingest payload for tenant %s", tenant.id)
 
+        host_value = _first_non_empty(form_data.get("host"), form_data.get("system"))
+        environment_value = _first_non_empty(
+            form_data.get("environment"), form_data.get("site")
+        )
+
+        if not host_value or not environment_value:
+            return redirect(
+                url_for(
+                    "datadomain.form",
+                    error="Provide both host and environment.",
+                    host=host_value,
+                    environment=environment_value,
+                )
+            )
+
         dims = {
-            "host": (
-                form_data.get("host")
-                or form_data.get("system")
-                or current_app.config["DEFAULT_DIM_HOST"]
-            ),
-            "environment": (
-                form_data.get("environment")
-                or form_data.get("site")
-                or current_app.config["DEFAULT_DIM_ENVIRONMENT"]
-            ),
+            "host": host_value,
+            "environment": environment_value,
         }
         merged_dims = util.merge_dimensions(tenant.static_dims, dims)
         metric_prefix = tenant.metric_prefix or current_app.config["METRIC_PREFIX"]
@@ -167,13 +174,22 @@ def register(app):
     return bp, METADATA
 
 
+def _first_non_empty(*candidates: Optional[str]) -> str:
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        stripped = candidate.strip()
+        if stripped:
+            return stripped
+    return ""
+
+
 def _form_defaults():
     host_arg = request.args.get("host") or request.args.get("system")
     environment_arg = request.args.get("environment") or request.args.get("site")
     defaults = {
-        "host": host_arg or current_app.config["DEFAULT_DIM_HOST"],
-        "environment": environment_arg
-        or current_app.config["DEFAULT_DIM_ENVIRONMENT"],
+        "host": _first_non_empty(host_arg),
+        "environment": _first_non_empty(environment_arg),
         "totalBytes": request.args.get("totalBytes", ""),
         "usedBytes": request.args.get("usedBytes", ""),
         "availableBytes": request.args.get("availableBytes", ""),
