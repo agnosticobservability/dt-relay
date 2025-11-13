@@ -140,12 +140,6 @@ also updated automatically.
 | `DEFAULT_DIM_HOST`   | Default `host` dimension when the form is empty.               | `dd-system-01`  |
 | `DEFAULT_DIM_ENVIRONMENT` | Default `environment` dimension when the form is empty.         | `primary-dc`    |
 | `METRIC_PREFIX`      | Metric prefix when tenants do not specify their own.           | `custom.ddfs`   |
-| `METRICS_CUSTOM_LABELS` | Optional labels to attach to the `/metrics/` endpoint output. Accepts JSON or comma-separated `key=value` pairs. | `(blank)` |
-
-Set `METRICS_CUSTOM_LABELS` to decorate the Prometheus-style `/metrics/`
-endpoint with additional metadata. The value can be a JSON object or a comma-
-separated list of `key=value` pairs. Invalid entries are ignored and logged.
-
 ### Tenants
 
 Tenants are defined in `config/tenants.json`. Each entry contains:
