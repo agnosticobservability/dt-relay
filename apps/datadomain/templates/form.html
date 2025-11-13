@@ -62,21 +62,48 @@
     </fieldset>
 
     <fieldset>
-      <legend>Metrics</legend>
-      <label>Total Space
-        <input type="text" name="totalSpace" value="{{ form_defaults.totalSpace }}">
+      <legend>Filesystem Capacity (bytes)</legend>
+      <label>Total Bytes
+        <input type="number" name="totalBytes" value="{{ form_defaults.totalBytes }}" min="0" step="1">
       </label>
-      <label>Used Space
-        <input type="text" name="usedSpace" value="{{ form_defaults.usedSpace }}">
+      <label>Used Bytes
+        <input type="number" name="usedBytes" value="{{ form_defaults.usedBytes }}" min="0" step="1">
       </label>
-      <label>Available Space
-        <input type="text" name="availableSpace" value="{{ form_defaults.availableSpace }}">
+      <label>Available Bytes
+        <input type="number" name="availableBytes" value="{{ form_defaults.availableBytes }}" min="0" step="1">
       </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Alerts</legend>
       <label>Critical Alerts
-        <input type="number" name="criticalAlerts" value="{{ form_defaults.criticalAlerts }}" min="0">
+        <input type="number" name="criticalAlerts" value="{{ form_defaults.criticalAlerts }}" min="0" step="1">
       </label>
       <label>Warning Alerts
-        <input type="number" name="warningAlerts" value="{{ form_defaults.warningAlerts }}" min="0">
+        <input type="number" name="warningAlerts" value="{{ form_defaults.warningAlerts }}" min="0" step="1">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Enclosures</legend>
+      <label>Normal Enclosures
+        <input type="number" name="enclosuresNormal" value="{{ form_defaults.enclosuresNormal }}" min="0" step="1">
+      </label>
+      <label>Degraded Enclosures
+        <input type="number" name="enclosuresDegraded" value="{{ form_defaults.enclosuresDegraded }}" min="0" step="1">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Drives</legend>
+      <label>Operational Drives
+        <input type="number" name="drivesOperational" value="{{ form_defaults.drivesOperational }}" min="0" step="1">
+      </label>
+      <label>Spare Drives
+        <input type="number" name="drivesSpare" value="{{ form_defaults.drivesSpare }}" min="0" step="1">
+      </label>
+      <label>Failed Drives
+        <input type="number" name="drivesFailed" value="{{ form_defaults.drivesFailed }}" min="0" step="1">
       </label>
     </fieldset>
 

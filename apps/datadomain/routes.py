@@ -163,10 +163,15 @@ def _form_defaults():
     defaults = {
         "system": request.args.get("system") or current_app.config["DEFAULT_DIM_SYSTEM"],
         "site": request.args.get("site") or current_app.config["DEFAULT_DIM_SITE"],
-        "totalSpace": request.args.get("totalSpace", ""),
-        "usedSpace": request.args.get("usedSpace", ""),
-        "availableSpace": request.args.get("availableSpace", ""),
+        "totalBytes": request.args.get("totalBytes", ""),
+        "usedBytes": request.args.get("usedBytes", ""),
+        "availableBytes": request.args.get("availableBytes", ""),
         "criticalAlerts": request.args.get("criticalAlerts", ""),
         "warningAlerts": request.args.get("warningAlerts", ""),
+        "enclosuresNormal": request.args.get("enclosuresNormal", ""),
+        "enclosuresDegraded": request.args.get("enclosuresDegraded", ""),
+        "drivesOperational": request.args.get("drivesOperational", ""),
+        "drivesSpare": request.args.get("drivesSpare", ""),
+        "drivesFailed": request.args.get("drivesFailed", ""),
     }
     return defaults
