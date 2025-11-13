@@ -7,7 +7,7 @@ from flask import Blueprint, current_app, redirect, request, url_for
 
 from server import util
 
-from . import metrics
+from . import metrics, views
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,8 @@ def form():
     ]
     defaults = _form_defaults()
 
-    return bp.render_template(
-        "form.html",
+    return render_template(
+        views.FORM_TEMPLATE,
         tenants=tenant_list,
         error=error,
         selected_tenants=selected,
@@ -184,8 +184,8 @@ def ingest():
 
     logger.info("Generic metrics ingest completed with overall status %s", overall_status)
 
-    return bp.render_template(
-        "results.html",
+    return render_template(
+        views.RESULTS_TEMPLATE,
         overall_status=overall_status,
         tenant_results=tenant_results,
     )
