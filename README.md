@@ -1,20 +1,20 @@
 # dt-relay
 
-dt-relay is a lightweight relay that ingests metrics into Dynatrace from curated tools. It ships with two built-in experiences:
+dt-relay is a lightweight Flask application that ingests metrics into Dynatrace from curated tools. The Gunicorn-backed app is fronted by an Nginx reverse proxy and currently ships with two built-in experiences:
 
 - `/dt-relay/datadomain` turns Data Domain capacity values into Dynatrace metrics using the Metrics v2 API.
-- `/dt-relay/metrics` lets you submit arbitrary metrics with custom dimensions.
+- `/dt-relay/metrics` lets you submit arbitrary metrics with custom dimensions, timestamps, units, and tenant-specific tokens.
 
-The project is structured so additional tools can be added under `apps/` without touching the core server code.
+The project is structured so additional tools can be added under `apps/` without touching the core server code. Each sub-app exposes a form, health endpoint, and ingest handler that are discovered automatically at startup.
 
 ## Features
 
 - HTTPS front-end terminated by Nginx on port 443
-- Server-rendered UI for entering Data Domain metrics
-- Generic metrics builder for arbitrary key/value pairs and dimensions
+- Server-rendered UI for entering Data Domain metrics with validation for required dimensions
+- Generic metrics builder for arbitrary key/value pairs, dimensions, timestamp overrides, and optional unit metadata
 - Multi-tenant Dynatrace support with shared or per-tenant tokens
 - Extensible architecture: add new apps under `apps/` and register automatically
-- Secure-by-default headers, no token echoing or logging
+- Secure-by-default headers, no token echoing or logging (logs fall back to stdout if the log file cannot be created)
 
 ## Repository Layout
 
@@ -79,7 +79,8 @@ dt-relay/
 4. Visit <https://localhost/dt-relay/datadomain> to use the Data Domain form.
 
 5. Visit <https://localhost/dt-relay/metrics> to submit generic metrics with
-   custom dimensions and values.
+   custom dimensions, per-tenant token overrides, timestamp overrides, and
+   optional metric unit metadata.
 
 ### Helper script
 
@@ -112,6 +113,7 @@ also updated automatically.
   repository and is mounted read/write into the container by `docker compose`.
 - The container entrypoint adjusts permissions on the mounted directory when the
   stack starts so that logs are still captured when the host path is owned by root.
+- If the file cannot be created, logging falls back to stdout/stderr automatically.
 - Review the file with `tail -f logs/dt-relay.log` while testing ingest flows.
 - Logs intentionally omit sensitive values like Dynatrace tokens and form payloads.
 
@@ -137,12 +139,13 @@ also updated automatically.
 | Variable             | Description                                                    | Default         |
 |----------------------|----------------------------------------------------------------|-----------------|
 | `AUTH_PASSWORD`      | Required password to submit the form.                          | `(blank)` (set explicitly) |
-| `DEFAULT_DIM_HOST`   | Default `host` dimension when the form is empty.               | `dd-system-01`  |
-| `DEFAULT_DIM_ENVIRONMENT` | Default `environment` dimension when the form is empty.         | `primary-dc`    |
+| `DEFAULT_DIM_HOST`   | Default `host` dimension when the form is empty. Falls back to the legacy `DEFAULT_DIM_SYSTEM`. | `dd-system-01`  |
+| `DEFAULT_DIM_ENVIRONMENT` | Default `environment` dimension when the form is empty. Falls back to the legacy `DEFAULT_DIM_SITE`. | `primary-dc`    |
 | `METRIC_PREFIX`      | Metric prefix when tenants do not specify their own.           | `custom.ddfs`   |
 ### Tenants
 
-Tenants are defined in `config/tenants.json`. Each entry contains:
+Tenants are defined in `config/tenants.json`. The file can be a list or an
+object keyed by tenant ID. Each entry contains:
 
 - `id` – unique slug used in the UI and configuration
 - `label` – friendly display name
@@ -180,7 +183,8 @@ Verify the application is healthy via HTTPS:
 curl -k https://localhost/dt-relay/health
 ```
 
-The response should be `ok` with status `200`.
+The response should be `ok` with status `200`. A plain HTTP variant is also
+available at `/health` to support container health checks.
 
 ## Prefill URL Example
 
@@ -207,6 +211,7 @@ testing new metric definitions without adding code. Provide:
 - Optional metric prefix overrides (defaults to the global `METRIC_PREFIX`).
 - Arbitrary dimension key/value pairs merged with tenant static dimensions.
 - Any number of metric name/value pairs; only numeric values generate lines.
+- Optional timestamp overrides (milliseconds since epoch) and a single unit metadata value applied to every metric.
 
 The form supports query-string prefill for keys, values, and timestamps using
 `dim_key`, `dim_value`, `metric_key`, `metric_value`, and `ts` parameters. Leave
