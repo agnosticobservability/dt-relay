@@ -36,13 +36,13 @@
           <td>{{ result.status }}</td>
           <td class="{{ 'status-success' if result.success else 'status-failure' }}">{{ result.message }}</td>
           <td>
-            <details>
+            <details open>
               <summary>View lines</summary>
               <pre>{{ result.lines }}</pre>
             </details>
           </td>
           <td>
-            <details>
+            <details open>
               <summary>View response</summary>
               <pre>{{ result.response_text }}</pre>
             </details>
