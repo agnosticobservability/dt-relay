@@ -57,7 +57,6 @@ def build_lines(
                 builder.build_line(suffix, form_data.get(form_key))
             )
         if group_lines:
-            lines.append(heading)
             lines.extend(group_lines)
 
     return lines
