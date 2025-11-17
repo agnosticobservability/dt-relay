@@ -26,6 +26,7 @@
         <th>HTTP Status</th>
         <th>Message</th>
         <th>Payload</th>
+        <th>Dynatrace Response</th>
       </tr>
     </thead>
     <tbody>
@@ -38,6 +39,12 @@
             <details>
               <summary>View lines</summary>
               <pre>{{ result.lines }}</pre>
+            </details>
+          </td>
+          <td>
+            <details>
+              <summary>View response</summary>
+              <pre>{{ result.response_text }}</pre>
             </details>
           </td>
         </tr>
