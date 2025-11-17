@@ -26,6 +26,7 @@
         <th>HTTP Status</th>
         <th>Message</th>
         <th>Payload</th>
+        <th>Dynatrace Response</th>
       </tr>
     </thead>
     <tbody>
@@ -35,9 +36,15 @@
           <td>{{ result.status }}</td>
           <td class="{{ 'status-success' if result.success else 'status-failure' }}">{{ result.message }}</td>
           <td>
-            <details>
+            <details open>
               <summary>View lines</summary>
               <pre>{{ result.lines }}</pre>
+            </details>
+          </td>
+          <td>
+            <details open>
+              <summary>View response</summary>
+              <pre>{{ result.response_text }}</pre>
             </details>
           </td>
         </tr>
