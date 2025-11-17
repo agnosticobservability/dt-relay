@@ -81,6 +81,7 @@ def ingest():
                     "message": "Unknown tenant",
                     "success": False,
                     "lines": "",
+                    "response_text": "",
                 }
             )
             overall_success = False
@@ -119,6 +120,7 @@ def ingest():
                     "message": "No numeric values provided",
                     "success": False,
                     "lines": "",
+                    "response_text": "",
                 }
             )
             overall_success = False
@@ -140,6 +142,7 @@ def ingest():
                     "message": message,
                     "success": success,
                     "lines": "\n".join(lines),
+                    "response_text": response.text,
                 }
             )
             if not success:
@@ -153,6 +156,7 @@ def ingest():
                     "message": str(exc),
                     "success": False,
                     "lines": "\n".join(lines),
+                    "response_text": "",
                 }
             )
             overall_success = False
